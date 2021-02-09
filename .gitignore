@@ -1,8 +1,17 @@
-ignore/
-rebuild/
-
+# Editors
+.vscode/
 # Trash
 .DS_Store
 Thumbs.db
-
-tests/vagrant/.vagrant
+bin/
+flux
+*.iso
+# Temp
+cluster-v2/
+hack/op2vault.sh
+ignore/
+rebuild/
+logs/
+# Ansible
+ansible/roles/xanmanning.k3s*
+ansible/roles/andrewrothstein.calicoctl*
