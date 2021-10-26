@@ -3,15 +3,28 @@
 # Trash
 .DS_Store
 Thumbs.db
-bin/
-flux
+# Binaries
+bin
+/flux
 *.iso
-# Temp
-cluster-v2/
-hack/op2vault.sh
-ignore/
-rebuild/
-logs/
+# Temp folders
+.temp*
+.private/
+.logs/
+.task/
 # Ansible
-ansible/roles/xanmanning.k3s*
-ansible/roles/andrewrothstein.calicoctl*
+xanmanning.k3s*
+mrlesmithjr.zfs*
+# Terraform
+.terraform
+.terraform.tfstate*
+terraform.tfstate*
+# Sops
+.decrypted~*
+# Kubernetes
+kubeconfig
+talosconfig
+# NAS
+secrets.json
+# Other
+report.html
