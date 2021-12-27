@@ -10,7 +10,7 @@ spec:
     spec:
       # renovate: registryUrl=https://k8s-at-home.com/charts/
       chart: blocky
-      version: 9.0.3
+      version: 9.1.0
       sourceRef:
         kind: HelmRepository
         name: k8s-at-home-charts
@@ -19,12 +19,12 @@ spec:
   values:
     image:
       repository: ghcr.io/0xerr0r/blocky
-      tag: v0.16
+      tag: v0.17
     controller:
       enabled: true
       type: deployment
       strategy: RollingUpdate
-      replicas: 2
+      replicas: 1
     env:
       TZ: "America/New_York"
     service:
@@ -59,10 +59,10 @@ spec:
     config: |
       upstream:
         default:
-          - tcp+udp:${GATEWAY_ADDR}
+          - tcp+udp:${OPNSENSE_ADDR}
       conditional:
         mapping:
-          ${SECRET_DOMAIN}: tcp+udp:${GATEWAY_ADDR}
+          ${SECRET_PUBLIC_DOMAIN}: tcp+udp:${OPNSENSE_ADDR}
       blocking:
         blackLists:
           ads:
@@ -89,7 +89,7 @@ spec:
           default:
             - ads
       clientLookup:
-        upstream: tcp+udp:${GATEWAY_ADDR}
+        upstream: tcp+udp:${OPNSENSE_ADDR}
       prometheus:
         enable: true
         path: /metrics

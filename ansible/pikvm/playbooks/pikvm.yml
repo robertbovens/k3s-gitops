@@ -1,0 +1,29 @@
+---
+- hosts:
+    - pikvm
+  become: true
+  gather_facts: true
+  any_errors_fatal: true
+  pre_tasks:
+    - name: Pausing for 5 seconds...
+      pause:
+        seconds: 5
+    - name: Mount read-write
+      ansible.builtin.command: /usr/local/bin/rw
+      tags: always
+  roles:
+    - role: os.pikvm
+      tags: os
+    - role: acme.pikvm
+      tags: acme
+    - role: node-exporter.pikvm
+      tags: node-exporter
+    # TODO: Promtail will not work for journal on arm/arm64
+    # https://github.com/grafana/loki/issues/1459
+    # "WARNING!!! Journal target was configured but support for reading the systemd journal is not compiled into this build of promtail!"
+    # - role: promtail.pikvm
+    #   tags: promtail
+  post_tasks:
+    - name: Mount read-only
+      ansible.builtin.command: /usr/local/bin/ro
+      tags: always

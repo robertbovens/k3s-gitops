@@ -10,7 +10,7 @@ spec:
     spec:
       # renovate: registryUrl=https://prometheus-community.github.io/helm-charts
       chart: kube-prometheus-stack
-      version: 19.2.2
+      version: 25.2.0
       sourceRef:
         kind: HelmRepository
         name: prometheus-community-charts
@@ -74,14 +74,12 @@ spec:
       ingress:
         enabled: true
         pathType: Prefix
-        ingressClassName: "traefik"
-        annotations:
-          traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
+        ingressClassName: "nginx"
         hosts:
-          - "alert-manager.${SECRET_DOMAIN}"
+          - "alert-manager.${SECRET_PUBLIC_DOMAIN}"
         tls:
           - hosts:
-              - "alert-manager.${SECRET_DOMAIN}"
+              - "alert-manager.${SECRET_PUBLIC_DOMAIN}"
       alertmanagerSpec:
         storage:
           volumeClaimTemplate:
@@ -90,19 +88,20 @@ spec:
               resources:
                 requests:
                   storage: 1Gi
-    nodeExporter:
-      serviceMonitor:
-        relabelings:
-          - action: replace
-            regex: (.*)
-            replacement: $1
-            sourceLabels:
-              - __meta_kubernetes_pod_node_name
-            targetLabel: kubernetes_node
     kube-state-metrics:
       fullnameOverride: kube-state-metrics
     prometheus-node-exporter:
       fullnameOverride: node-exporter
+      prometheus:
+        monitor:
+          enabled: true
+          relabelings:
+            - action: replace
+              regex: (.*)
+              replacement: $1
+              sourceLabels:
+                - __meta_kubernetes_pod_node_name
+              targetLabel: kubernetes_node
     grafana:
       enabled: false
       forceDeployDashboards: true
@@ -127,12 +126,28 @@ spec:
         - 192.168.42.10
         - 192.168.42.11
         - 192.168.42.12
+      service:
+        enabled: true
+        port: 10257
+        targetPort: 10257
+      serviceMonitor:
+        enabled: true
+        https: true
+        insecureSkipVerify: true
     kubeScheduler:
       enabled: true
       endpoints:
         - 192.168.42.10
         - 192.168.42.11
         - 192.168.42.12
+      service:
+        enabled: true
+        port: 10259
+        targetPort: 10259
+      serviceMonitor:
+        enabled: true
+        https: true
+        insecureSkipVerify: true
     kubeProxy:
       enabled: true
       endpoints:
@@ -149,21 +164,25 @@ spec:
         enabled: true
         port: 2381
         targetPort: 2381
-    # Setting this option to 0 disabled CPU limits
     prometheusOperator:
-      configReloaderCpu: 0
+      prometheusConfigReloader:
+        resources:
+          requests:
+            cpu: 100m
+            memory: 50Mi
+          limits:
+            cpu: 200m
+            memory: 100Mi
     prometheus:
       ingress:
         enabled: true
         pathType: Prefix
-        ingressClassName: "traefik"
-        annotations:
-          traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
+        ingressClassName: "nginx"
         hosts:
-          - "prometheus.${SECRET_DOMAIN}"
+          - "prometheus.${SECRET_PUBLIC_DOMAIN}"
         tls:
           - hosts:
-              - "prometheus.${SECRET_DOMAIN}"
+              - "prometheus.${SECRET_PUBLIC_DOMAIN}"
       thanosService:
         enabled: true
       thanosServiceMonitor:
@@ -186,27 +205,54 @@ spec:
                 requests:
                   storage: 10Gi
         thanos:
-          image: quay.io/thanos/thanos:v0.23.1
+          image: quay.io/thanos/thanos:v0.24.0
           version: v0.22.0
           objectStorageConfig:
             name: thanos-objstore
             key: objstore.yml
         additionalScrapeConfigs:
-          - job_name: "coredns"
+          - job_name: cadvisor
             honor_timestamps: true
             static_configs:
               - targets:
-                  - "${GATEWAY_ADDR}:9153"
-          - job_name: 'minio-job'
+                  - "expanse:8005"
+          - job_name: coredns
+            honor_timestamps: true
+            static_configs:
+              - targets:
+                  - "opnsense:9153"
+          - job_name: minio
             honor_timestamps: true
             metrics_path: /minio/v2/metrics/cluster
             static_configs:
               - targets:
-                  - "minio.tools:9000"
-          - job_name: "node-exporter"
+                  - "expanse:9000"
+          - job_name: node-exporter
             honor_timestamps: true
             static_configs:
               - targets:
-                  - "${GATEWAY_ADDR}:9100"
-                  - "${NAS_ADDR}:9100"
-                  - "192.168.1.28:9100"
+                  - "opnsense:9100"
+                  - "expanse:9100"
+                  - "valetudo:9100"
+                  - "pikvm:9100"
+          - job_name: postgresql
+            honor_timestamps: true
+            static_configs:
+              - targets:
+                  - "expanse:9187"
+          - job_name: vault
+            metrics_path: /v1/sys/metrics
+            params:
+              format:
+                - prometheus
+            static_configs:
+              - targets:
+                  - "expanse:8200"
+          - job_name: pikvm
+            metrics_path: /api/export/prometheus/metrics
+            basic_auth:
+              username: admin
+              password: admin
+            static_configs:
+              - targets:
+                  - "pikvm.${SECRET_PRIVATE_DOMAIN}"

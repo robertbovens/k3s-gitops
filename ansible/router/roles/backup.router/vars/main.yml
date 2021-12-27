@@ -1,0 +1,7 @@
+---
+#
+# SECRET* vars are encrypted with sops
+#
+
+# TODO: Renovate rclone version in router ansible
+rclone_version: v1.57.0

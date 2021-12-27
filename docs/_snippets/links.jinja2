@@ -1,7 +1,7 @@
 {%- set urls =
   {
     'repo': {
-      'url': 'https://github.com/onedr0p/home-cluster'
+      'url': 'https://github.com/onedr0p/home-ops'
     },
     'external': {
       'ansible': {
@@ -35,6 +35,10 @@
       'flux': {
         'url': 'https://fluxcd.io'
       },
+      'ingress-nginx': {
+        'url': 'https://kubernetes.github.io/ingress-nginx/',
+        'label': 'NGINX Ingress'
+      },
       'k3s': {
         'url': 'https://k3s.io'
       },
@@ -43,8 +47,8 @@
         'label': 'awesome-home-kubernetes'
       },
       'kah_discord': {
-        'url': 'https://discord.gg/sTMX7Vh',
-        'label': 'k8s@home Discord'
+        'url': 'https://discord.gg/k8s-at-home',
+        'label': 'Kubernetes @home Discord'
       },
       'kasten': {
         'url': 'https://www.kasten.io',
@@ -60,6 +64,10 @@
       'letsencrypt': {
         'url': 'https://letsencrypt.org',
         'label': 'LetsEncrypt'
+      },
+      'metallb': {
+        'url': 'https://metallb.universe.tf/',
+        'label': 'Metallb'
       },
       'opnsense': {
         'url': 'https://opnsense.org',

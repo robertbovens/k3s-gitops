@@ -10,14 +10,14 @@ spec:
     spec:
       # renovate: registryUrl=https://k8s-at-home.com/charts/
       chart: frigate
-      version: 6.1.1
+      version: 6.2.0
       sourceRef:
         kind: HelmRepository
         name: k8s-at-home-charts
         namespace: flux-system
       interval: 5m
   dependsOn:
-    - name: emqx
+    - name: mosquitto
       namespace: home
   values:
     image:
@@ -26,19 +26,18 @@ spec:
     ingress:
       main:
         enabled: true
-        ingressClassName: "traefik"
+        ingressClassName: "nginx"
         annotations:
-          traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
           hajimari.io/enable: "true"
           hajimari.io/icon: "cctv"
         hosts:
-          - host: "frigate.${SECRET_DOMAIN}"
+          - host: "frigate.${SECRET_PUBLIC_DOMAIN}"
             paths:
               - path: /
                 pathType: Prefix
         tls:
           - hosts:
-              - "frigate.${SECRET_DOMAIN}"
+              - "frigate.${SECRET_PUBLIC_DOMAIN}"
     securityContext:
       privileged: true
     persistence:
@@ -66,7 +65,7 @@ spec:
         mountPath: /dev/shm
     config: |
       mqtt:
-        host: emqx
+        host: mosquitto
         topic_prefix: frigate
         user: ${SECRET_MQTT_USERNAME}
         password: ${SECRET_MQTT_PASSWORD}
@@ -99,16 +98,16 @@ spec:
           - -hwaccel_output_format
           - yuv420p
 
-       # Specify camera's
+      # Specify camera's
       cameras:
         # --
-        driveway:
+        frigate_driveway:
           ffmpeg:
             inputs:
-              - path: rtsp://192.168.1.2:7447/G3Uq8HXgG4lSdw7g
+              - path: rtsp://192.168.1.2:7447/Bbu0H4JuPjzK6zy9
                 roles:
                   - detect
-              - path: rtsp://192.168.1.2:7447/HxyLIfvoNRWdDnrF
+              - path: rtsp://192.168.1.2:7447/vixHJ1htwDadpDgE
                 roles:
                   - rtmp
                   - record
@@ -120,20 +119,20 @@ spec:
             fps: 10
           record:
             enabled: True
-            retain_days: 0
+            retain_days: 7
             events:
               retain:
-                default: 14
+                default: 7
           snapshots:
             enabled: True
             timestamp: False
             retain:
-              default: 14
+              default: 7
           objects:
             track:
               - person
         # --
-        porch:
+        frigate_porch:
           ffmpeg:
             inputs:
               - path: rtsp://192.168.1.2:7447/818ALvS1HQ744KND
@@ -151,20 +150,20 @@ spec:
             fps: 10
           record:
             enabled: True
-            retain_days: 0
+            retain_days: 7
             events:
               retain:
-                default: 14
+                default: 7
           snapshots:
             enabled: True
             timestamp: False
             retain:
-              default: 14
+              default: 7
           objects:
             track:
               - person
         # --
-        garage:
+        frigate_garage:
           ffmpeg:
             inputs:
               - path: rtsp://192.168.1.2:7447/3mzDU0htPbIcPPFH
@@ -182,21 +181,21 @@ spec:
             fps: 10
           record:
             enabled: True
-            retain_days: 0
+            retain_days: 7
             events:
               retain:
-                default: 14
+                default: 7
           snapshots:
             enabled: True
             timestamp: False
             retain:
-              default: 14
+              default: 7
           objects:
             track:
               - car
               - person
         # --
-        study:
+        frigate_study:
           ffmpeg:
             inputs:
               - path: rtsp://192.168.1.2:7447/25BixzVyRA74DHfP
@@ -214,20 +213,20 @@ spec:
             fps: 10
           record:
             enabled: True
-            retain_days: 0
+            retain_days: 7
             events:
               retain:
-                default: 14
+                default: 7
           snapshots:
             enabled: True
             timestamp: False
             retain:
-              default: 14
+              default: 7
           objects:
             track:
               - person
         # --
-        living-room:
+        frigate_living_room:
           ffmpeg:
             inputs:
               - path: rtsp://192.168.1.2:7447/PgTHLlRmqRH6Z6wV
@@ -245,20 +244,20 @@ spec:
             fps: 10
           record:
             enabled: True
-            retain_days: 0
+            retain_days: 7
             events:
               retain:
-                default: 14
+                default: 7
           snapshots:
             enabled: True
             timestamp: False
             retain:
-              default: 14
+              default: 7
           objects:
             track:
               - person
         # --
-        basement-1:
+        frigate_basement_1:
           ffmpeg:
             inputs:
               - path: rtsp://192.168.1.2:7447/5pXj1v9ZyXf8ssmc
@@ -276,20 +275,20 @@ spec:
             fps: 10
           record:
             enabled: True
-            retain_days: 0
+            retain_days: 7
             events:
               retain:
-                default: 14
+                default: 7
           snapshots:
             enabled: True
             timestamp: False
             retain:
-              default: 14
+              default: 7
           objects:
             track:
               - person
         # --
-        basement-2:
+        frigate_basement_2:
           ffmpeg:
             inputs:
               - path: rtsp://192.168.1.2:7447/pp1jGiFpb1AuVHRl
@@ -307,22 +306,20 @@ spec:
             fps: 15
           record:
             enabled: True
-            retain_days: 0
+            retain_days: 7
             events:
               retain:
-                default: 14
+                default: 7
           snapshots:
             enabled: True
             timestamp: False
             retain:
-              default: 14
+              default: 7
           objects:
             track:
               - person
     podAnnotations:
       configmap.reloader.stakater.com/reload: "frigate-config"
-    nodeSelector:
-      node-role.kubernetes.io/worker: "true"
     affinity:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
@@ -332,11 +329,6 @@ spec:
                   operator: In
                   values:
                     - "true"
-            # - matchExpressions:
-            #     - key: feature.node.kubernetes.io/custom-intel-gpu
-            #       operator: In
-            #       values:
-            #         - "true"
     resources:
       requests:
         gpu.intel.com/i915: 1

@@ -1,9 +1,10 @@
+---
 server:
   log_level: info
   disable: true
 
 client:
-  url: https://loki.${SECRET_DOMAIN}/loki/api/v1/push
+  url: "https://loki.${SECRET_DOMAIN}/loki/api/v1/push"
 
 positions:
   filename: /tmp/positions.yaml
@@ -14,7 +15,7 @@ scrape_configs:
     # [2021-09-23T14:30:20.403Z] [INFO] MQTT configured
     pipeline_stages:
       - regex:
-          expression: "^\\[(?P<timestamp>.+)\\] \\[(?P<level>(TRACE|DEBUG|INFO|WARNING|ERROR))\\] (?P<message>.*)$"
+          expression: '^\[(?P<timestamp>.+)\] \[(?P<level>(TRACE|DEBUG|INFO|WARNING|ERROR))\] (?P<message>.*)$'
       - labels:
           level:
       - timestamp:
@@ -24,7 +25,7 @@ scrape_configs:
           source: message
     static_configs:
       - targets:
-         - localhost
+          - localhost
         labels:
           __path__: /tmp/valetudo.log
           hostname: valetudo

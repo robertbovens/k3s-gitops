@@ -2,13 +2,13 @@
 
 {% import 'links.jinja2' as links %}
 
-My DNS setup may seem a bit complicated at first, but it allows for completely automatic management of DNS entries for service and ingress objects.
+My DNS setup may seem a bit complicated at first, but it allows for completely automatic management of DNS entries for service and ingress objects. It also allows for me to determine what ingresses I want public or private.
 
 ## Components
 
-### Traefik
+### NGINX Ingress Controller
 
-{{ links.external('traefik') }} is my cluster ingress controller. It is set to a `externalIPs` so that I can forward a port on my router directly to the service.
+{{ links.external('ingress-nginx') }} is my cluster ingress controller. With {{ links.external('calico') }} in BGP mode, it is set to an `externalIPs` so that I can forward a port on my router directly to the service. If using {{ links.external('metallb') }} I would be using an `loadbalancerIP` instead.
 
 ### CoreDNS with k8s_gateway
 

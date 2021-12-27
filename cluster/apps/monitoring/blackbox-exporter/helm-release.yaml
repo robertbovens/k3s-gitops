@@ -10,7 +10,7 @@ spec:
     spec:
       # renovate: registryUrl=https://prometheus-community.github.io/helm-charts
       chart: prometheus-blackbox-exporter
-      version: 5.2.0
+      version: 5.3.1
       sourceRef:
         kind: HelmRepository
         name: prometheus-community-charts
@@ -18,6 +18,19 @@ spec:
       interval: 5m
   values:
     fullnameOverride: blackbox-exporter
+    image:
+      repository: quay.io/prometheus/blackbox-exporter
+    ingress:
+      enabled: true
+      className: nginx
+      hosts:
+        - host: "blackbox.${SECRET_PUBLIC_DOMAIN}"
+          paths:
+            - path: /
+              pathType: Prefix
+      tls:
+        - hosts:
+            - "blackbox.${SECRET_PUBLIC_DOMAIN}"
     allowIcmp: true
     config:
       modules:
@@ -34,27 +47,45 @@ spec:
         interval: 30s
         scrapeTimeout: 30s
       targets:
-        - name: router
-          url: "${GATEWAY_ADDR}"
-          module: icmp
-        - name: garage
-          url: 192.168.1.19
-          module: icmp
-        - name: vacuum
-          url: 192.168.1.28
-          module: icmp
-        - name: zigbee
-          url: 192.168.1.90
-          module: icmp
-        - name: nas
-          url: "${NAS_ADDR}"
-          module: icmp
-        - name: piaware
-          url: 192.168.150.25
-          module: icmp
-        - name: hdhomerun
-          url: 192.168.150.30
-          module: icmp
+        - module: icmp
+          name: opnsense
+          url: opnsense
+        - module: icmp
+          name: open-garage
+          url: open-garage
+        - module: icmp
+          name: valetudo
+          url: valetudo
+        - module: icmp
+          name: zigbee-controller
+          url: zigbee-controller
+        - module: icmp
+          name: expanse
+          url: expanse
+        - module: icmp
+          name: hdhomerun
+          url: hdhomerun
+        - module: icmp
+          name: hue-bridge
+          url: hue-bridge
+        - module: icmp
+          name: pdu-0
+          url: pdu-0
+        - module: icmp
+          name: pdu-1
+          url: pdu-1
+        - module: icmp
+          name: ups-0
+          url: ups-0
+        - module: icmp
+          name: unifi
+          url: unifi
+        - module: icmp
+          name: pikvm
+          url: pikvm
+        - module: icmp
+          name: idrac-0
+          url: idrac-0
     prometheusRule:
       enabled: true
       additionalLabels:

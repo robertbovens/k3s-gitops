@@ -10,37 +10,40 @@ spec:
     spec:
       # renovate: registryUrl=https://k8s-at-home.com/charts/
       chart: zwavejs2mqtt
-      version: 5.0.2
+      version: 5.1.0
       sourceRef:
         kind: HelmRepository
         name: k8s-at-home-charts
         namespace: flux-system
       interval: 5m
-  dependsOn:
-    - name: emqx
-      namespace: home
   values:
     image:
       repository: ghcr.io/zwave-js/zwavejs2mqtt
-      tag: 5.10.0
+      tag: 6.2.0
     env:
       TZ: "America/New_York"
-    securityContext:
-      privileged: true
+    service:
+      main:
+        ports:
+          http:
+            port: 8091
+          websocket:
+            enabled: true
+            port: 3000
     ingress:
       main:
         enabled: true
-        ingressClassName: "traefik"
-        annotations:
-          traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
+        ingressClassName: "nginx"
         hosts:
-          - host: "zwavejs2mqtt.${SECRET_DOMAIN}"
+          - host: "zwavejs2mqtt.${SECRET_PUBLIC_DOMAIN}"
             paths:
               - path: /
                 pathType: Prefix
         tls:
           - hosts:
-              - "zwavejs2mqtt.${SECRET_DOMAIN}"
+              - "zwavejs2mqtt.${SECRET_PUBLIC_DOMAIN}"
+    securityContext:
+      privileged: true
     persistence:
       config:
         enabled: true
@@ -51,12 +54,6 @@ spec:
         type: hostPath
         hostPath: /dev/serial/by-id/usb-0658_0200-if00
         hostPathType: CharDevice
-    # podAnnotations:
-    #   backup.velero.io/backup-volumes: config
-    #   pre.hook.backup.velero.io/container: fsfreeze
-    #   pre.hook.backup.velero.io/command: '["/sbin/fsfreeze", "--freeze", "/usr/src/app/store"]'
-    #   post.hook.backup.velero.io/container: fsfreeze
-    #   post.hook.backup.velero.io/command: '["/sbin/fsfreeze", "--unfreeze", "/usr/src/app/store"]'
     affinity:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
@@ -66,12 +63,3 @@ spec:
                   operator: In
                   values:
                     - "true"
-    # additionalContainers:
-    #   fsfreeze:
-    #     name: fsfreeze
-    #     image: ghcr.io/k8s-at-home/fsfreeze:v2.37-r0
-    #     volumeMounts:
-    #       - name: config
-    #         mountPath: /usr/src/app/store
-    #     securityContext:
-    #       privileged: true

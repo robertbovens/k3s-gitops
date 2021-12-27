@@ -10,19 +10,19 @@ spec:
     spec:
       # renovate: registryUrl=https://k8s-at-home.com/charts/
       chart: home-assistant
-      version: 11.0.5
+      version: 11.2.1
       sourceRef:
         kind: HelmRepository
         name: k8s-at-home-charts
         namespace: flux-system
       interval: 5m
   dependsOn:
-    - name: emqx
+    - name: mosquitto
       namespace: home
   values:
     image:
       repository: ghcr.io/home-assistant/home-assistant
-      tag: 2021.10.6
+      tag: 2021.12.5
     env:
       TZ: "America/New_York"
     envFrom:
@@ -39,21 +39,20 @@ spec:
     ingress:
       main:
         enabled: true
-        ingressClassName: "traefik"
+        ingressClassName: "nginx"
         annotations:
-          external-dns.alpha.kubernetes.io/target: "ipv4.${SECRET_DOMAIN}"
+          external-dns.alpha.kubernetes.io/target: "ipv4.${SECRET_PUBLIC_DOMAIN}"
           external-dns/is-public: "true"
           hajimari.io/enable: "true"
           hajimari.io/icon: "home-assistant"
-          traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
         hosts:
-          - host: "hass.${SECRET_DOMAIN}"
+          - host: "hass.${SECRET_PUBLIC_DOMAIN}"
             paths:
               - path: /
                 pathType: Prefix
         tls:
           - hosts:
-              - "hass.${SECRET_DOMAIN}"
+              - "hass.${SECRET_PUBLIC_DOMAIN}"
     probes:
       liveness:
         enabled: false
@@ -66,11 +65,6 @@ spec:
         enabled: true
         existingClaim: home-assistant-config-v1
     podAnnotations:
-      # backup.velero.io/backup-volumes: config
-      # pre.hook.backup.velero.io/container: fsfreeze
-      # pre.hook.backup.velero.io/command: '["/sbin/fsfreeze", "--freeze", "/config"]'
-      # post.hook.backup.velero.io/container: fsfreeze
-      # post.hook.backup.velero.io/command: '["/sbin/fsfreeze", "--unfreeze", "/config"]'
       secret.reloader.stakater.com/reload: "home-assistant"
     addons:
       codeserver:
@@ -90,17 +84,15 @@ spec:
           - "/config/.vscode"
         ingress:
           enabled: true
-          ingressClassName: "traefik"
-          annotations:
-            traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
+          ingressClassName: "nginx"
           hosts:
-            - host: "hass-config.${SECRET_DOMAIN}"
+            - host: "hass-config.${SECRET_PUBLIC_DOMAIN}"
               paths:
                 - path: /
                   pathType: Prefix
           tls:
             - hosts:
-                - "hass-config.${SECRET_DOMAIN}"
+                - "hass-config.${SECRET_PUBLIC_DOMAIN}"
         volumeMounts:
           - name: config
             mountPath: /config
@@ -110,12 +102,3 @@ spec:
         memory: 100Mi
       limits:
         memory: 4000Mi
-    # additionalContainers:
-    #   fsfreeze:
-    #     name: fsfreeze
-    #     image: ghcr.io/k8s-at-home/fsfreeze:v2.37-r0
-    #     volumeMounts:
-    #       - name: config
-    #         mountPath: /config
-    #     securityContext:
-    #       privileged: true

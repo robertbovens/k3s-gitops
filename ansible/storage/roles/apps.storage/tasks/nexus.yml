@@ -1,0 +1,22 @@
+---
+- name: Create nexus directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ containers_base_dir }}/apps/nexus"
+    - "{{ containers_base_dir }}/data/nexus"
+
+- block:
+    - name: Create nexus docker compose file
+      ansible.builtin.template:
+        src: nexus/docker-compose.yml.j2
+        dest: "{{ containers_base_dir }}/apps/nexus/docker-compose.yml"
+        mode: 0755
+
+    - name: Create nexus systemd service file
+      ansible.builtin.template:
+        src: "docker-compose@.service.j2"
+        dest: "/etc/systemd/system/docker-compose@nexus.service"
+        mode: 0644
+  notify: Restart nexus

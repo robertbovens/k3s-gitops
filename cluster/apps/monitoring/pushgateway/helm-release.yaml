@@ -10,7 +10,7 @@ spec:
     spec:
       # renovate: registryUrl=https://prometheus-community.github.io/helm-charts
       chart: prometheus-pushgateway
-      version: 1.11.0
+      version: 1.14.0
       sourceRef:
         kind: HelmRepository
         name: prometheus-community-charts
@@ -20,15 +20,13 @@ spec:
     fullnameOverride: pushgateway
     ingress:
       enabled: true
+      className: traefik
       path: /
-      annotations:
-        kubernetes.io/ingress.class: traefik
-        traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
       hosts:
-        - "pushgateway.${SECRET_DOMAIN}"
+        - "pushgateway.${SECRET_PUBLIC_DOMAIN}"
       tls:
         - hosts:
-            - "pushgateway.${SECRET_DOMAIN}"
+            - "pushgateway.${SECRET_PUBLIC_DOMAIN}"
     serviceMonitor:
       enabled: true
       namespace: monitoring

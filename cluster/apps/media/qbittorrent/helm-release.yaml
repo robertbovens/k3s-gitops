@@ -10,7 +10,7 @@ spec:
     spec:
       # renovate: registryUrl=https://k8s-at-home.com/charts/
       chart: qbittorrent
-      version: 13.0.1
+      version: 13.1.0
       sourceRef:
         kind: HelmRepository
         name: k8s-at-home-charts
@@ -19,9 +19,11 @@ spec:
   values:
     image:
       repository: ghcr.io/k8s-at-home/qbittorrent
-      tag: v4.3.8
+      tag: v4.3.9
     env:
       TZ: "America/New_York"
+    settings:
+      automaticPortSetup: false
     service:
       main:
         ports:
@@ -30,6 +32,7 @@ spec:
       bittorrent:
         enabled: true
         type: LoadBalancer
+        # loadBalancerIP: 192.168.70.106
         externalIPs:
           - "${SVC_QBITTORRENT_ADDR}"
         ports:
@@ -42,19 +45,26 @@ spec:
     ingress:
       main:
         enabled: true
-        ingressClassName: "traefik"
+        ingressClassName: "nginx"
         annotations:
           hajimari.io/enable: "true"
           hajimari.io/icon: "cloud-download"
-          traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
+          # Custom themes provided by https://github.com/gilbN/theme.park
+          nginx.ingress.kubernetes.io/configuration-snippet: |
+            proxy_hide_header "x-webkit-csp";
+            proxy_hide_header "content-security-policy";
+            proxy_hide_header "X-Frame-Options";
+            proxy_set_header Accept-Encoding "";
+            sub_filter '</head>' '<link rel="stylesheet" type="text/css" href="https://theme-park.dev/css/base/qbittorrent/nord.css"></head>';
+            sub_filter_once on;
         hosts:
-          - host: "qb.${SECRET_DOMAIN}"
+          - host: "qb.${SECRET_PUBLIC_DOMAIN}"
             paths:
               - path: /
                 pathType: Prefix
         tls:
           - hosts:
-              - "qb.${SECRET_DOMAIN}"
+              - "qb.${SECRET_PUBLIC_DOMAIN}"
     metrics:
       enabled: true
       exporter:
@@ -84,24 +94,9 @@ spec:
             server: "${NAS_ADDR}"
             path: /tycho/Media
         mountPath: /media
-    # podAnnotations:
-    #   backup.velero.io/backup-volumes: config
-    #   pre.hook.backup.velero.io/container: fsfreeze
-    #   pre.hook.backup.velero.io/command: '["/sbin/fsfreeze", "--freeze", "/config"]'
-    #   post.hook.backup.velero.io/container: fsfreeze
-    #   post.hook.backup.velero.io/command: '["/sbin/fsfreeze", "--unfreeze", "/config"]'
     resources:
       requests:
         memory: 250Mi
         cpu: 500m
       limits:
         memory: 6000Mi
-    # additionalContainers:
-    #   fsfreeze:
-    #     name: fsfreeze
-    #     image: ghcr.io/k8s-at-home/fsfreeze:v2.37-r0
-    #     volumeMounts:
-    #       - name: config
-    #         mountPath: /config
-    #     securityContext:
-    #       privileged: true
